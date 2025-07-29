@@ -1,39 +1,43 @@
 import { Pokemon } from "@/pokemons";
-import { Move } from "@/pokemons/interfaces/pokemon";
 import { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 
-// interface Props {
-//   params: { id: string };
-// }
-type Params = Promise<{ id: string }>;
-export async function generateStaticParams() {
-  const pokemons = await fetch("https://pokeapi.co/api/v2/pokemon?limit=100").then(
-    (res) => res.json()
-  );
-  return pokemons.results.map((pokemon: { name: string }) => ({
-    id: pokemon.name,
-  }));
-}
-export async function generateMetadata({
-  params,
-}: {
+interface Props {
   params: { id: string };
-}): Promise<Metadata> {
+}
+//! En build time
+export async function generateStaticParams() {
+  const static151Pokemons = Array.from({ length: 151 }).map((v, i) => `${i + 1}`);
+
+  return static151Pokemons.map((id) => ({
+    id: id,
+  }));
+
+  // return [
+  //   { id: '1' },
+  //   { id: '2' },
+  //   { id: '3' },
+  //   { id: '4' },
+  //   { id: '5' },
+  //   { id: '6' },
+  // ]
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
-    const { id, name } = await getPokemon(params?.id || "");
+    const { id, name } = await getPokemon(params.id);
 
     return {
-      title: `Pokemon ${id} - ${name}`,
-      description: `Details about Pokemon ${id}`,
+      title: `#${id} - ${name}`,
+      description: `Página del pokémon ${name}`,
     };
   } catch (error) {
     console.log(error);
-
     return {
-      title: "Pokemon Not Found",
-      description: "Not found",
+      title: "Página del pokémon",
+      description:
+        "Culpa cupidatat ipsum magna reprehenderit ex tempor sint ad minim reprehenderit consequat sit.",
     };
   }
 }
@@ -41,9 +45,14 @@ export async function generateMetadata({
 const getPokemon = async (id: string): Promise<Pokemon> => {
   try {
     const pokemon = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`, {
-      cache: "force-cache",
-    }).then((res) => res.json());
-    console.log(pokemon);
+      // cache: 'force-cache',// TODO: cambiar esto en un futuro
+      next: {
+        revalidate: 60 * 60 * 30 * 6,
+      },
+    }).then((resp) => resp.json());
+
+    console.log("Se cargó: ", pokemon.name);
+
     return pokemon;
   } catch (error) {
     console.log(error);
@@ -52,9 +61,9 @@ const getPokemon = async (id: string): Promise<Pokemon> => {
   }
 };
 
-export default async function PokemonPage(props: { params: Params }) {
-  const params = await props.params;
+export default async function PokemonPage({ params }: Props) {
   const pokemon = await getPokemon(params.id);
+
   return (
     <div className="flex mt-5 flex-col items-center text-slate-800">
       <div className="relative flex flex-col items-center rounded-[20px] w-[700px] mx-auto bg-white bg-clip-border  shadow-lg  p-3">
@@ -72,7 +81,7 @@ export default async function PokemonPage(props: { params: Params }) {
             />
 
             <div className="flex flex-wrap">
-              {pokemon.moves.map((move: Move) => (
+              {pokemon.moves.map((move) => (
                 <p key={move.move.name} className="mr-2 capitalize">
                   {move.move.name}
                 </p>
@@ -84,11 +93,11 @@ export default async function PokemonPage(props: { params: Params }) {
           <div className="flex flex-col items-start justify-center rounded-2xl bg-white bg-clip-border px-3 py-4  drop-shadow-lg ">
             <p className="text-sm text-gray-600">Types</p>
             <div className="text-base font-medium text-navy-700 flex">
-              {/* {pokemon.types.map((type: any) => (
+              {pokemon.types.map((type) => (
                 <p key={type.slot} className="mr-2 capitalize">
                   {type.type.name}
                 </p>
-              ))} */}
+              ))}
             </div>
           </div>
 
