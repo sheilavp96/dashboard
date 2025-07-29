@@ -1,6 +1,11 @@
 import React from "react";
 import { SidebarMenuItem } from "./SidebarMenuItem";
-import { IoBrowsersSharp, IoCalculatorOutline, IoLogoReact } from "react-icons/io5";
+import {
+  IoBrowsersSharp,
+  IoCalculatorOutline,
+  IoFootball,
+  IoLogoReact,
+} from "react-icons/io5";
 
 const menuItems = [
   {
@@ -15,13 +20,19 @@ const menuItems = [
     title: "Counter",
     subtitle: "Contador",
   },
+  {
+    path: "/dashboard/pokemons",
+    icon: <IoFootball size={40} />,
+    title: "Lista de Pokemons",
+    subtitle: "Visualiza los pokemons disponibles",
+  },
 ];
 export const Sidebar = () => {
   return (
     <div
       style={{ width: "400px" }}
       id="menu"
-      className="bg-gray-900 min-h-screen z-10 text-slate-300 w-64  left-0 h-screen overflow-y-scroll"
+      className="bg-gray-900 min-h-screen z-10 text-slate-300 w-64  left-0 overflow-y-scroll"
     >
       <div id="logo" className="px-6 py-10">
         <h1 className="flex items-center text-2xl font-bold px-6 py-10">
