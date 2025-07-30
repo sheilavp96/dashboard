@@ -4,7 +4,8 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 
 interface Props {
-  params: { name: string };
+  params: Promise<{ name: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
 //! En build time
@@ -13,29 +14,26 @@ export async function generateStaticParams() {
     `https://pokeapi.co/api/v2/pokemon?limit=151`
   ).then((res) => res.json());
 
-  const static151Pokemons = data.results.map((pokemon) => ({
+  return data.results.map((pokemon) => ({
     name: pokemon.name,
-  }));
-
-  return static151Pokemons.map(({ name }) => ({
-    name: name,
   }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { name } = await params;
+
   try {
-    const { id, name } = await getPokemon(params.name);
+    const { id, name: pokeName } = await getPokemon(name);
 
     return {
-      title: `#${id} - ${name}`,
-      description: `Página del pokémon ${name}`,
+      title: `#${id} - ${pokeName}`,
+      description: `Página del pokémon ${pokeName}`,
     };
   } catch (error) {
     console.log(error);
     return {
       title: "Página del pokémon",
-      description:
-        "Culpa cupidatat ipsum magna reprehenderit ex tempor sint ad minim reprehenderit consequat sit.",
+      description: "Error al cargar datos del pokémon.",
     };
   }
 }
@@ -43,7 +41,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 const getPokemon = async (name: string): Promise<Pokemon> => {
   try {
     const pokemon = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}`, {
-      // cache: 'force-cache',// TODO: cambiar esto en un futuro
       next: {
         revalidate: 60 * 60 * 30 * 6,
       },
@@ -54,13 +51,13 @@ const getPokemon = async (name: string): Promise<Pokemon> => {
     return pokemon;
   } catch (error) {
     console.log(error);
-
     notFound();
   }
 };
 
 export default async function PokemonPage({ params }: Props) {
-  const pokemon = await getPokemon(params.name);
+  const { name } = await params;
+  const pokemon = await getPokemon(name);
 
   return (
     <div className="flex mt-5 flex-col items-center text-slate-800">
